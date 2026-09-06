@@ -1,0 +1,13 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Route every /api/* request to our single Express-in-a-function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@libsql/client"]

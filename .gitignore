@@ -1,0 +1,7 @@
+node_modules/
+.env
+db/*.db
+db/local-test.db
+uploads/
+server.log
+.netlify/

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Housing Society ERP</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0E2620">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen" style="display:none;">
+    <canvas id="login-3d-canvas"></canvas>
+    <div class="auth-vignette"></div>
+    <div class="auth-wordmark" id="auth-wordmark">
+      <div class="eyebrow-word" data-i18n="housing_registry">Housing Society Registry</div>
+      <h1 id="auth-wordmark-text"></h1>
+    </div>
+    <div class="auth-card">
+      <div class="brand-mark" style="margin-bottom:14px;">HS</div>
+      <h2 id="auth-title" data-i18n="sign_in">Sign in</h2>
+      <p class="hint" id="auth-subtitle" data-i18n="enter_credentials">Enter your credentials to continue.</p>
+      <form id="auth-form" class="form-grid" style="grid-template-columns:1fr;">
+        <label id="auth-fullname-field" style="display:none;"><span data-i18n="full_name">Full Name</span>
+          <input type="text" id="auth-fullname">
+        </label>
+        <label><span data-i18n="username">Username</span>
+          <input type="text" id="auth-username" required autocomplete="username">
+        </label>
+        <label><span data-i18n="password">Password</span>
+          <input type="password" id="auth-password" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="btn-primary full-width" id="auth-submit" data-i18n="sign_in_btn">Sign in</button>
+      </form>
+      <div id="auth-error" class="result-card error" style="display:none; margin-top:14px;"></div>
+    </div>
+    <button type="button" id="lang-toggle-auth" class="lang-toggle-btn">اردو</button>
+    <div class="auth-contact">+92 333 8868241</div>
+  </div>
+
+  <div class="app-shell" id="app-shell" style="display:none;">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">HS</span>
+        <div class="brand-text">
+          <div class="brand-name">Housing Society</div>
+          <div class="brand-sub" data-i18n="erp_console">ERP Console</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon">◈</span><span data-i18n="nav_overview">Overview</span></button>
+        <button class="nav-item" data-view="projects"><span class="nav-icon">▦</span><span data-i18n="nav_projects">Projects &amp; Plots</span></button>
+        <button class="nav-item" data-view="customers"><span class="nav-icon">◐</span><span data-i18n="nav_customers">Customers</span></button>
+        <button class="nav-item" data-view="sales"><span class="nav-icon">✦</span><span data-i18n="nav_sales">Sell a Plot</span></button>
+        <button class="nav-item" data-view="recovery"><span class="nav-icon">⟳</span><span data-i18n="nav_recovery">Recovery</span></button>
+        <button class="nav-item" data-view="transfer"><span class="nav-icon">⇄</span><span data-i18n="nav_transfer">Transfer</span></button>
+        <button class="nav-item" data-view="noc-resale"><span class="nav-icon">✓</span><span data-i18n="nav_noc">NOC &amp; Resale</span></button>
+        <button class="nav-item" data-view="accounting"><span class="nav-icon">▤</span><span data-i18n="nav_accounting">Accounting</span></button>
+        <button class="nav-item" data-view="brokers"><span class="nav-icon">◆</span><span data-i18n="nav_brokers">Brokers</span></button>
+        <button class="nav-item" data-view="landlords"><span class="nav-icon">▲</span><span data-i18n="nav_landlords">Landlords</span></button>
+        <button class="nav-item" data-view="team"><span class="nav-icon">◉</span><span data-i18n="nav_team">Team</span></button>
+        <button class="nav-item" data-view="tools"><span class="nav-icon">✧</span><span data-i18n="nav_tools">Utilities</span></button>
+        <button class="nav-item" data-view="migration"><span class="nav-icon">⇪</span><span data-i18n="nav_migration">Migration Report</span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <div id="current-user" style="margin-bottom:8px;"></div>
+        <button id="logout-btn" class="btn-secondary" style="width:100%;" data-i18n="logout">Log out</button>
+        <button type="button" id="install-app-btn" class="btn-secondary install-btn" style="display:none;">⬇ Install App</button>
+        <button type="button" id="lang-toggle-btn" class="lang-toggle-btn">اردو</button>
+        <div class="contact-line">+92 333 8868241</div>
+      </div>
+
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1 id="view-title" data-i18n="nav_overview">Overview</h1>
+        <div class="plot-lookup">
+          <input id="plot-code-search" type="text" placeholder="Look up plot by code (e.g. 2130)" data-i18n-placeholder="plot_lookup_placeholder">
+          <button id="plot-code-search-btn" data-i18n="find">Find</button>
+        </div>
+      </header>
+
+      <section id="view-overview" class="view active">
+        <div class="overview-hero">
+          <canvas id="overview-3d-canvas"></canvas>
+          <div class="overview-hero-text">
+            <div class="eyebrow" data-i18n="live_portfolio">Live Portfolio</div>
+            <h2 class="hero-headline" data-i18n="hero_headline">Every plot, every rupee,<br>one console.</h2>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card tilt-card">
+            <div class="stat-icon">🏗️</div>
+            <div class="stat-value" data-count="0" id="stat-projects">0</div>
+            <div class="stat-label" data-i18n="active_projects">Active Projects</div>
+          </div>
+          <div class="stat-card tilt-card">
+            <div class="stat-icon">📐</div>
+            <div class="stat-value" data-count="0" id="stat-plots">0</div>
+            <div class="stat-label" data-i18n="total_plots">Total Plots</div>
+          </div>
+          <div class="stat-card tilt-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" data-count="0" id="stat-customers">0</div>
+            <div class="stat-label" data-i18n="customers_label">Customers</div>
+          </div>
+          <div class="stat-card tilt-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-value" data-count="0" id="stat-overdue">0</div>
+            <div class="stat-label" data-i18n="overdue_accounts">Overdue Accounts</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="plot_status_breakdown">Plot Status Breakdown</h2></div>
+          <div id="status-breakdown" class="status-breakdown"></div>
+        </div>
+      </section>
+
+      <section id="view-projects" class="view">
+        <div class="panel-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h2 data-i18n="projects">Projects</h2>
+              <button class="btn-primary" id="new-project-btn" data-i18n="new_project">+ New Project</button>
+            </div>
+            <div id="projects-list" class="list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2 data-i18n="plots">Plots</h2>
+              <div class="head-actions">
+                <select id="filter-project"></select>
+                <button class="btn-primary" id="new-plot-btn" data-i18n="new_plot">+ Add Plot</button>
+                <button class="btn-secondary" id="bulk-plot-btn" data-i18n="bulk_create">Bulk Create</button>
+              </div>
+            </div>
+            <table class="data-table" id="plots-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_code">Code</th><th data-i18n="th_block">Block</th><th data-i18n="th_type">Type</th><th data-i18n="th_marla">Marla</th>
+                  <th data-i18n="th_base_price">Base Price</th><th data-i18n="th_status">Status</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-customers" class="view">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="customers_title">Customers</h2>
+            <div class="head-actions">
+              <input id="customer-search" type="text" placeholder="Search name / CNIC / phone" data-i18n-placeholder="search_customer_placeholder">
+              <button class="btn-primary" id="new-customer-btn" data-i18n="new_customer">+ New Customer</button>
+            </div>
+          </div>
+          <table class="data-table" id="customers-table">
+            <thead>
+              <tr><th data-i18n="th_name">Name</th><th data-i18n="th_father_name">Father's Name</th><th data-i18n="th_cnic">CNIC</th><th data-i18n="th_phone">Phone</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel" id="customer-detail-panel" style="display:none;">
+          <div class="panel-head"><h2 data-i18n="customer_ledger">Customer Ledger</h2></div>
+          <div id="customer-detail-body"></div>
+        </div>
+      </section>
+
+      <section id="view-sales" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="sell_a_plot">Sell a Plot</h2></div>
+          <form id="sale-form" class="form-grid">
+            <label><span data-i18n="plot_code_label">Plot Code</span>
+              <input type="text" id="sale-plot-code" placeholder="e.g. 2130" required>
+            </label>
+            <label><span data-i18n="customer_label">Customer</span>
+              <select id="sale-customer" required></select>
+            </label>
+            <label><span data-i18n="total_price">Total Price</span>
+              <input type="number" id="sale-total-price" required>
+            </label>
+            <label><span data-i18n="down_payment">Down Payment</span>
+              <input type="number" id="sale-down-payment" value="0">
+            </label>
+            <label><span data-i18n="contract_date">Contract Date</span>
+              <input type="date" id="sale-contract-date" required>
+            </label>
+            <label><span data-i18n="plan_type">Plan Type</span>
+              <select id="sale-plan-type">
+                <option value="one_time" data-i18n="plan_one_time">One-time</option>
+                <option value="monthly" selected data-i18n="plan_monthly">Monthly</option>
+                <option value="quarterly" data-i18n="plan_quarterly">Quarterly</option>
+                <option value="semi_annual" data-i18n="plan_semi_annual">Semi-annual</option>
+                <option value="annual" data-i18n="plan_annual">Annual</option>
+              </select>
+            </label>
+            <label><span data-i18n="number_of_installments">Number of Installments</span>
+              <input type="number" id="sale-num-installments" value="12">
+            </label>
+            <label class="full-width"><span data-i18n="english_clause">English Clause (optional)</span>
+              <textarea id="sale-english-clause" rows="2"></textarea>
+            </label>
+            <label class="full-width" dir="rtl">اردو شق (اختیاری)
+              <textarea id="sale-urdu-clause" rows="2" dir="rtl" class="urdu-text"></textarea>
+            </label>
+            <button type="submit" class="btn-primary full-width" data-i18n="create_sale_contract">Create Sale Contract</button>
+          </form>
+          <div id="sale-result"></div>
+          <div id="sale-print-link"></div>
+
+        </div>
+      </section>
+
+      <section id="view-recovery" class="view">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="outstanding_defaulters">Outstanding &amp; Defaulters</h2>
+            <button class="btn-secondary" id="refresh-outstanding" data-i18n="refresh">Refresh</button>
+          </div>
+          <table class="data-table" id="outstanding-table">
+            <thead>
+              <tr><th data-i18n="th_customer">Customer</th><th data-i18n="th_phone">Phone</th><th data-i18n="th_plot">Plot</th><th data-i18n="th_outstanding">Outstanding</th><th data-i18n="th_overdue_installments">Overdue Installments</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="record_a_payment">Record a Payment</h2></div>
+          <form id="pay-form" class="form-grid">
+            <label><span data-i18n="installment_id">Installment ID</span>
+              <input type="number" id="pay-installment-id" required>
+            </label>
+            <label><span data-i18n="paid_amount">Paid Amount</span>
+              <input type="number" id="pay-amount" required>
+            </label>
+            <label><span data-i18n="paid_date">Paid Date</span>
+              <input type="date" id="pay-date" required>
+            </label>
+            <label><span data-i18n="mode">Mode</span>
+              <select id="pay-mode">
+                <option value="cash" data-i18n="cash">Cash</option>
+                <option value="bank" data-i18n="bank">Bank</option>
+              </select>
+            </label>
+            <button type="submit" class="btn-primary full-width" data-i18n="record_payment">Record Payment</button>
+          </form>
+          <div id="pay-result"></div>
+        </div>
+      </section>
+
+      <section id="view-transfer" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="transfer_ownership_title">Transfer Plot Ownership</h2></div>
+          <p class="hint" data-i18n="transfer_hint">Plot code stays the same. The new owner becomes current; the previous owner's ledger is preserved in history.</p>
+          <form id="transfer-form" class="form-grid">
+            <label><span data-i18n="plot_code_label">Plot Code</span>
+              <input type="text" id="transfer-plot-code" required>
+            </label>
+            <label><span data-i18n="new_owner">New Owner</span>
+              <select id="transfer-customer" required></select>
+            </label>
+            <label><span data-i18n="transfer_date">Transfer Date</span>
+              <input type="date" id="transfer-date" required>
+            </label>
+            <label><span data-i18n="transfer_fee">Transfer Fee</span>
+              <input type="number" id="transfer-fee" value="0">
+            </label>
+            <button type="submit" class="btn-primary full-width" data-i18n="transfer_ownership_btn">Transfer Ownership</button>
+          </form>
+          <div id="transfer-result"></div>
+        </div>
+      </section>
+
+      <section id="view-noc-resale" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="noc_status_issuance">NOC Status &amp; Issuance</h2></div>
+          <div class="form-grid">
+            <label><span data-i18n="plot_code_label">Plot Code</span>
+              <input type="text" id="noc-plot-code" placeholder="e.g. 2130">
+            </label>
+            <button type="button" class="btn-primary" id="noc-check-btn" style="align-self:end;" data-i18n="check_status">Check Status</button>
+          </div>
+          <div id="noc-status-result" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="buyback_a_plot">Buy-back a Plot</h2></div>
+          <p class="hint" data-i18n="buyback_hint">Society repurchases the plot from its current owner.</p>
+          <form id="buyback-form" class="form-grid">
+            <label><span data-i18n="plot_code_label">Plot Code</span><input type="text" id="buyback-plot-code" required></label>
+            <label><span data-i18n="buyback_amount">Buy-back Amount</span><input type="number" id="buyback-amount" required></label>
+            <label><span data-i18n="date_label">Date</span><input type="date" id="buyback-date" required></label>
+            <button type="submit" class="btn-primary full-width" data-i18n="record_buyback">Record Buy-back</button>
+          </form>
+          <div id="buyback-result"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="resell_bought_back">Resell a Bought-back Plot</h2></div>
+          <p class="hint" data-i18n="resale_hint">Profit or loss vs. the buy-back price posts to the ledger automatically.</p>
+          <form id="resale-form" class="form-grid">
+            <label><span data-i18n="plot_code_label">Plot Code</span><input type="text" id="resale-plot-code" required></label>
+            <label><span data-i18n="new_buyer">New Buyer</span><select id="resale-customer" required></select></label>
+            <label><span data-i18n="resale_amount">Resale Amount</span><input type="number" id="resale-amount" required></label>
+            <label><span data-i18n="date_label">Date</span><input type="date" id="resale-date" required></label>
+            <button type="submit" class="btn-primary full-width" data-i18n="record_resale">Record Resale</button>
+          </form>
+          <div id="resale-result"></div>
+        </div>
+      </section>
+
+      <section id="view-accounting" class="view">
+        <div class="stat-grid" id="trial-balance-summary"></div>
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="trial_balance">Trial Balance</h2></div>
+          <table class="data-table" id="trial-balance-table">
+            <thead><tr><th data-i18n="th_code">Code</th><th data-i18n="th_account">Account</th><th data-i18n="th_type">Type</th><th data-i18n="th_debit">Debit</th><th data-i18n="th_credit">Credit</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="recent_vouchers">Recent Vouchers</h2></div>
+          <table class="data-table" id="vouchers-table">
+            <thead><tr><th data-i18n="th_no">No.</th><th data-i18n="th_type">Type</th><th data-i18n="th_date">Date</th><th data-i18n="th_narration">Narration</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-brokers" class="view">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="brokers_agents">Brokers &amp; Sales Agents</h2>
+            <button class="btn-primary" id="new-broker-btn" data-i18n="new_broker">+ New Broker</button>
+          </div>
+          <table class="data-table" id="brokers-table">
+            <thead><tr><th data-i18n="th_name">Name</th><th data-i18n="th_phone">Phone</th><th data-i18n="th_commission_rate">Commission Rate</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-landlords" class="view">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="landlords_title">Landlords</h2>
+            <button class="btn-primary" id="new-landlord-btn" data-i18n="new_landlord">+ New Landlord</button>
+          </div>
+          <table class="data-table" id="landlords-table">
+            <thead><tr><th data-i18n="th_name">Name</th><th data-i18n="th_land_area">Land Area</th><th data-i18n="th_purchase_price">Purchase Price</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel" id="landlord-detail-panel" style="display:none;">
+          <div class="panel-head"><h2 data-i18n="documents">Documents</h2></div>
+          <div id="landlord-detail-body"></div>
+        </div>
+      </section>
+
+      <section id="view-team" class="view">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="team_accounts">Team Accounts</h2>
+            <button class="btn-primary" id="new-user-btn" data-i18n="new_team_member">+ New Team Member</button>
+          </div>
+          <p class="hint" data-i18n="team_hint">Roles are labels for now — every logged-in account currently has full access. Per-role restrictions are a planned next step.</p>
+          <table class="data-table" id="users-table">
+            <thead><tr><th data-i18n="th_name">Name</th><th data-i18n="th_username">Username</th><th data-i18n="th_role">Role</th><th data-i18n="th_status">Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-migration" class="view">
+        <div class="stat-grid" id="migration-stats"></div>
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="migration_report_title">What Was Imported From Your Legacy Software</h2></div>
+          <div id="migration-details" class="hint" style="font-size:13px; line-height:1.7;"></div>
+        </div>
+      </section>
+
+      <section id="view-tools" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="whatsapp_notification">WhatsApp Payment Notification</h2></div>
+          <form id="whatsapp-form" class="form-grid">
+            <label><span data-i18n="customer_label">Customer</span><select id="wa-customer" required></select></label>
+            <label class="full-width"><span data-i18n="message_label">Message</span><textarea id="wa-message" rows="2">Your installment payment has been received. Thank you.</textarea></label>
+            <button type="submit" class="btn-primary full-width" data-i18n="send">Send</button>
+          </form>
+          <div id="whatsapp-result"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="biometric_capture">Biometric Capture</h2></div>
+          <div class="scanner-widget">
+            <div class="scanner-visual" id="scanner-visual">
+              <canvas id="fingerprint-3d-canvas"></canvas>
+            </div>
+            <button type="button" class="btn-primary" id="biometric-btn" data-i18n="scan_fingerprint">Scan Fingerprint</button>
+          </div>
+          <div id="biometric-result" style="margin-top:14px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2 data-i18n="registry_fee_calculator">Registry Fee Calculator</h2></div>
+          <form id="registry-form" class="form-grid">
+            <label><span data-i18n="plot_size_marla">Plot Size (Marla)</span><input type="number" id="registry-marla" required></label>
+            <label><span data-i18n="sale_value">Sale Value</span><input type="number" id="registry-value" required></label>
+            <button type="submit" class="btn-primary full-width" data-i18n="calculate">Calculate</button>
+          </form>
+          <div id="registry-result"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <script src="translations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
