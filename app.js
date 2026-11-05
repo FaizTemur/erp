@@ -30,7 +30,9 @@ app.use('/api', require('./routes/migration'));
 
 let dbReady = null;
 function ensureDb() {
-  if (!dbReady) dbReady = initDb();
+  if (!dbReady) {
+    dbReady = initDb().catch(err => { dbReady = null; throw err; });
+  }
   return dbReady;
 }
 

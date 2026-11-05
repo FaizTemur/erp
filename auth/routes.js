@@ -43,6 +43,7 @@ function setAuthCookie(res, token) {
 
 // One-time setup: only works if no users exist yet
 router.post('/setup', ah(async (req, res) => {
+  requireJwtSecret(); // fail early, before creating an account we couldn't sign in
   const existing = await dbMod.get('SELECT COUNT(*) as cnt FROM users');
   if (existing.cnt > 0) {
     return res.status(403).json({ error: 'Setup already completed. Use /login instead.' });

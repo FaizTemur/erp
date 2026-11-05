@@ -38,7 +38,18 @@ function getClient() {
 async function initDb() {
   if (initialized) return;
   const db = getClient();
-  const schemaPath = path.join(__dirname, 'schema.sql');
+  // When Netlify bundles the function, __dirname no longer points at db/, so
+  // look in every place schema.sql can end up (see included_files in netlify.toml).
+  const candidates = [
+    path.join(__dirname, 'schema.sql'),
+    path.join(__dirname, 'db', 'schema.sql'),
+    path.join(process.cwd(), 'db', 'schema.sql'),
+    process.env.LAMBDA_TASK_ROOT && path.join(process.env.LAMBDA_TASK_ROOT, 'db', 'schema.sql'),
+  ].filter(Boolean);
+  const schemaPath = candidates.find(f => fs.existsSync(f));
+  if (!schemaPath) {
+    throw new Error('schema.sql not found. Looked in: ' + candidates.join(', '));
+  }
   const schema = fs.readFileSync(schemaPath, 'utf8');
 
   // Split on semicolons at statement boundaries and run each one.

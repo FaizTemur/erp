@@ -8,6 +8,15 @@ const handler = serverless(app);
 // request. ensureDb() caches the promise, so this only does real work once
 // per warm container, not on every single call.
 exports.handler = async (event, context) => {
-  await ensureDb();
-  return handler(event, context);
+  try {
+    await ensureDb();
+    return await handler(event, context);
+  } catch (err) {
+    console.error(err);
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: err.message || 'Server error' })
+    };
+  }
 };
