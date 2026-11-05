@@ -7,7 +7,7 @@
 // Caching that would mean seeing stale/wrong numbers, which would be worse
 // than no offline support at all.
 
-const CACHE_NAME = 'hs-erp-shell-v1';
+const CACHE_NAME = 'hs-erp-shell-v2';
 const SHELL_FILES = [
   '/',
   '/index.html',

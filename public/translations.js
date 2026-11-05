@@ -14,6 +14,9 @@ const TRANSLATIONS = {
     username: 'Username',
     password: 'Password',
     sign_in_btn: 'Sign in',
+    show_password: 'Show',
+    hide_password: 'Hide',
+    signing_in: 'Signing in…',
     create_and_sign_in: 'Create account & sign in',
 
     // Sidebar
@@ -193,6 +196,9 @@ const TRANSLATIONS = {
     username: 'یوزر نیم',
     password: 'پاس ورڈ',
     sign_in_btn: 'سائن ان کریں',
+    show_password: 'دکھائیں',
+    hide_password: 'چھپائیں',
+    signing_in: 'سائن ان ہو رہا ہے…',
     create_and_sign_in: 'اکاؤنٹ بنائیں اور سائن ان کریں',
 
     erp_console: 'ای آر پی کنسول',

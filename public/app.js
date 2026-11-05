@@ -44,19 +44,10 @@ function showAuthScreen() {
   document.getElementById('auth-title').textContent = isSetupMode ? t('create_admin_account') : t('sign_in');
   document.getElementById('auth-subtitle').textContent = isSetupMode ? t('setup_subtitle') : t('enter_credentials');
   document.getElementById('auth-fullname-field').style.display = isSetupMode ? 'flex' : 'none';
+  document.getElementById('auth-fullname').required = isSetupMode;
+  document.getElementById('auth-password').autocomplete = isSetupMode ? 'new-password' : 'current-password';
   document.getElementById('auth-submit').textContent = isSetupMode ? t('create_and_sign_in') : t('sign_in_btn');
-  revealWordmark();
-  initLoginScene();
-}
-
-function revealWordmark() {
-  const el = document.getElementById('auth-wordmark-text');
-  if (el.dataset.revealed) return;
-  el.dataset.revealed = '1';
-  const text = 'Elite Gardens';
-  el.innerHTML = text.split('').map((ch, i) =>
-    `<span class="wm-char" style="animation-delay:${0.4 + i * 0.035}s">${ch === ' ' ? '&nbsp;' : ch}</span>`
-  ).join('');
+  document.getElementById('auth-username').focus();
 }
 
 function showApp(user) {
@@ -67,145 +58,6 @@ function showApp(user) {
   loadOverview();
   initOverviewScene();
   attachTiltEffect();
-}
-
-// ---------- 3D: Login scene (rotating field of plots) ----------
-let loginSceneStarted = false;
-function initLoginScene() {
-  if (loginSceneStarted || typeof THREE === 'undefined') return;
-  loginSceneStarted = true;
-  const canvas = document.getElementById('login-3d-canvas');
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x081712, 0.052);
-
-  const camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight || 1, 0.1, 100);
-
-  // Cinematic establishing shot: start high and distant, ease down into a low survey angle
-  const camStart = new THREE.Vector3(2, 16, 22);
-  const camEnd = new THREE.Vector3(9, 6.5, 13);
-  camera.position.copy(camStart);
-
-  scene.add(new THREE.AmbientLight(0x3d5148, 0.5));
-  const key = new THREE.DirectionalLight(0xE0BB74, 1.6);
-  key.position.set(8, 14, 6);
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0x2A5C4C, 0.9);
-  rim.position.set(-10, 5, -8);
-  scene.add(rim);
-
-  const group = new THREE.Group();
-  scene.add(group);
-
-  // Ground plane - dark, faintly reflective survey terrain
-  const groundGeo = new THREE.PlaneGeometry(60, 60);
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0x0C211B, roughness: 0.85, metalness: 0.1 });
-  const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.02;
-  group.add(ground);
-
-  // Survey grid overlay
-  const grid = new THREE.GridHelper(60, 60, 0x6E5223, 0x1C4137);
-  grid.material.transparent = true;
-  grid.material.opacity = 0.35;
-  group.add(grid);
-
-  // Plot parcels: flat glowing-outline rectangles laid on the ground, like a site plan.
-  // A handful are "highlighted" - brighter, gently pulsing, as if actively surveyed.
-  const gridSize = 9;
-  const spacing = 1.35;
-  const parcels = [];
-  const brassColor = new THREE.Color(0xE0BB74);
-  const sageColor = new THREE.Color(0x6FA085);
-
-  for (let x = 0; x < gridSize; x++) {
-    for (let z = 0; z < gridSize; z++) {
-      if (Math.random() < 0.18) continue; // some empty lots for realism
-      const w = 0.85 + Math.random() * 0.25;
-      const d = 0.85 + Math.random() * 0.25;
-      const isHighlighted = Math.random() < 0.12;
-
-      const px = (x - gridSize / 2) * spacing;
-      const pz = (z - gridSize / 2) * spacing;
-
-      // Fill
-      const fillGeo = new THREE.PlaneGeometry(w, d);
-      const fillMat = new THREE.MeshBasicMaterial({
-        color: isHighlighted ? brassColor : 0x143028,
-        transparent: true,
-        opacity: isHighlighted ? 0.22 : 0.5
-      });
-      const fill = new THREE.Mesh(fillGeo, fillMat);
-      fill.rotation.x = -Math.PI / 2;
-      fill.position.set(px, 0.01, pz);
-      group.add(fill);
-
-      // Glowing edge outline
-      const edges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(w, d));
-      const lineMat = new THREE.LineBasicMaterial({
-        color: isHighlighted ? brassColor : sageColor,
-        transparent: true,
-        opacity: isHighlighted ? 0.95 : 0.4
-      });
-      const outline = new THREE.LineSegments(edges, lineMat);
-      outline.rotation.x = -Math.PI / 2;
-      outline.position.set(px, 0.02, pz);
-      group.add(outline);
-
-      if (isHighlighted) {
-        parcels.push({ fill, outline, phase: Math.random() * Math.PI * 2 });
-      }
-    }
-  }
-
-  function resize() {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  const clock = new THREE.Clock();
-  const introDuration = 3.2;
-
-  function animate() {
-    if (document.getElementById('auth-screen').style.display === 'none') {
-      requestAnimationFrame(animate);
-      return;
-    }
-    const t = clock.getElapsedTime();
-
-    // Cinematic ease from establishing shot into the settled survey angle
-    const introT = Math.min(t / introDuration, 1);
-    const eased = 1 - Math.pow(1 - introT, 3);
-
-    if (introT < 1) {
-      camera.position.lerpVectors(camStart, camEnd, eased);
-    } else {
-      // Gentle continuous orbit once settled
-      const orbitAngle = (t - introDuration) * 0.045;
-      const radius = Math.sqrt(camEnd.x * camEnd.x + camEnd.z * camEnd.z);
-      const baseAngle = Math.atan2(camEnd.z, camEnd.x);
-      camera.position.x = Math.cos(baseAngle + orbitAngle) * radius;
-      camera.position.z = Math.sin(baseAngle + orbitAngle) * radius;
-      camera.position.y = camEnd.y;
-    }
-    camera.lookAt(0, 0, 0);
-
-    parcels.forEach(p => {
-      const pulse = Math.sin(t * 1.2 + p.phase) * 0.5 + 0.5;
-      p.fill.material.opacity = 0.14 + pulse * 0.16;
-      p.outline.material.opacity = 0.6 + pulse * 0.4;
-    });
-
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  }
-  animate();
 }
 
 // ---------- 3D: Overview hero scene ----------
@@ -535,9 +387,18 @@ function attachTiltEffect() {
   });
 }
 
+document.getElementById('auth-toggle-pw').addEventListener('click', (e) => {
+  const input = document.getElementById('auth-password');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  e.currentTarget.textContent = t(show ? 'hide_password' : 'show_password');
+  e.currentTarget.setAttribute('data-i18n', show ? 'hide_password' : 'show_password');
+});
+
 document.getElementById('auth-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errDiv = document.getElementById('auth-error');
+  const submitBtn = document.getElementById('auth-submit');
   errDiv.style.display = 'none';
   const username = document.getElementById('auth-username').value.trim();
   const password = document.getElementById('auth-password').value;
@@ -546,18 +407,34 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     ? { username, password, full_name: document.getElementById('auth-fullname').value.trim() }
     : { username, password };
 
+  submitBtn.disabled = true;
+  submitBtn.textContent = t('signing_in');
+  let user = null;
   try {
-    const res = await fetch(`${API}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed');
-    showApp(data);
+    let res;
+    try {
+      res = await fetch(`${API}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } catch (netErr) {
+      throw new Error('Cannot reach the server. Check your connection and try again.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Sign in failed. Please try again.');
+    user = data;
   } catch (err) {
     errDiv.textContent = err.message;
     errDiv.style.display = 'block';
+    document.getElementById('auth-password').select();
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = isSetupMode ? t('create_and_sign_in') : t('sign_in_btn');
+  }
+  if (user) {
+    document.getElementById('auth-password').value = '';
+    showApp(user);
   }
 });
 
@@ -1136,7 +1013,14 @@ applyTranslations();
 document.getElementById('lang-toggle-btn')?.addEventListener('click', toggleLanguage);
 document.getElementById('lang-toggle-auth')?.addEventListener('click', toggleLanguage);
 
-checkAuth();
+checkAuth().catch(() => {
+  // Server unreachable on first load - still show the sign-in form with a clear message
+  isSetupMode = false;
+  showAuthScreen();
+  const errDiv = document.getElementById('auth-error');
+  errDiv.textContent = 'Cannot reach the server. Check your connection and refresh.';
+  errDiv.style.display = 'block';
+});
 
 
 // ============================================================

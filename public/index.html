@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Housing Society ERP</title>
 <link rel="manifest" href="manifest.json">
@@ -13,32 +14,30 @@
 </head>
 <body>
   <div id="auth-screen" class="auth-screen" style="display:none;">
-    <canvas id="login-3d-canvas"></canvas>
-    <div class="auth-vignette"></div>
-    <div class="auth-wordmark" id="auth-wordmark">
-      <div class="eyebrow-word" data-i18n="housing_registry">Housing Society Registry</div>
-      <h1 id="auth-wordmark-text"></h1>
-    </div>
-    <div class="auth-card">
-      <div class="brand-mark" style="margin-bottom:14px;">HS</div>
+    <main class="auth-card">
+      <div class="brand-mark">HS</div>
       <h2 id="auth-title" data-i18n="sign_in">Sign in</h2>
       <p class="hint" id="auth-subtitle" data-i18n="enter_credentials">Enter your credentials to continue.</p>
-      <form id="auth-form" class="form-grid" style="grid-template-columns:1fr;">
+
+      <form id="auth-form" class="auth-form">
         <label id="auth-fullname-field" style="display:none;"><span data-i18n="full_name">Full Name</span>
-          <input type="text" id="auth-fullname">
+          <input type="text" id="auth-fullname" autocomplete="name">
         </label>
         <label><span data-i18n="username">Username</span>
-          <input type="text" id="auth-username" required autocomplete="username">
+          <input type="text" id="auth-username" required autocomplete="username" autocapitalize="none" spellcheck="false">
         </label>
         <label><span data-i18n="password">Password</span>
-          <input type="password" id="auth-password" required autocomplete="current-password">
+          <span class="password-wrap">
+            <input type="password" id="auth-password" required autocomplete="current-password">
+            <button type="button" id="auth-toggle-pw" class="pw-toggle" data-i18n="show_password">Show</button>
+          </span>
         </label>
-        <button type="submit" class="btn-primary full-width" id="auth-submit" data-i18n="sign_in_btn">Sign in</button>
+        <button type="submit" class="btn-primary" id="auth-submit" data-i18n="sign_in_btn">Sign in</button>
       </form>
-      <div id="auth-error" class="result-card error" style="display:none; margin-top:14px;"></div>
-    </div>
+
+      <div id="auth-error" class="result-card error" role="alert" style="display:none;"></div>
+    </main>
     <button type="button" id="lang-toggle-auth" class="lang-toggle-btn">اردو</button>
-    <div class="auth-contact">+92 333 8868241</div>
   </div>
 
   <div class="app-shell" id="app-shell" style="display:none;">
